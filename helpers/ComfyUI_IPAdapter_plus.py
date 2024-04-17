@@ -57,7 +57,8 @@ class ComfyUI_IPAdapter_plus:
         if preset.startswith("PLUS ("):
             weights_to_add.extend(
                 [
-                    "ip-adapter-plus_sd15.safetensors",
+                    # We know this model uses SDXL, so commenting out unneeded weights
+                    # "ip-adapter-plus_sd15.safetensors",
                     "ip-adapter-plus_sdxl_vit-h.safetensors",
                 ]
             )
