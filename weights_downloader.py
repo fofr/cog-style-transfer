@@ -17,10 +17,6 @@ class WeightsDownloader:
 
     def download_weights(self, weight_str):
         if weight_str in self.weights_map:
-            if self.weights_manifest.is_non_commercial_only(weight_str):
-                print(
-                    f"⚠️  {weight_str} is for non-commercial use only. Unless you have obtained a commercial license.\nDetails: https://github.com/fofr/cog-comfyui/blob/main/weights_licenses.md"
-                )
             self.download_if_not_exists(
                 weight_str,
                 self.weights_map[weight_str]["url"],
@@ -30,13 +26,6 @@ class WeightsDownloader:
             raise ValueError(
                 f"{weight_str} unavailable. View the list of available weights: https://github.com/fofr/cog-comfyui/blob/main/supported_weights.md"
             )
-
-    def download_torch_checkpoints(self):
-        self.download_if_not_exists(
-            "mobilenet_v2-b0353104.pth",
-            f"{BASE_URL}/custom_nodes/comfyui_controlnet_aux/mobilenet_v2-b0353104.pth.tar",
-            "/root/.cache/torch/hub/checkpoints/",
-        )
 
     def download_if_not_exists(self, weight_str, url, dest):
         if not os.path.exists(f"{dest}/{weight_str}"):
