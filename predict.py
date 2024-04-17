@@ -53,7 +53,7 @@ class Predictor(BasePredictor):
 
     def update_workflow(self, workflow, **kwargs):
         workflow["6"]["inputs"]["text"] = kwargs["prompt"]
-        workflow["7"]["inputs"]["text"] = kwargs["negative_prompt"]
+        workflow["7"]["inputs"]["text"] = f"nsfw, nude, {kwargs['negative_prompt']}"
         workflow["3"]["inputs"]["seed"] = kwargs["seed"]
         empty_latent_image = workflow["10"]["inputs"]
         empty_latent_image["width"] = kwargs["width"]
@@ -84,16 +84,19 @@ class Predictor(BasePredictor):
         number_of_images: int = Input(
             description="Number of images to generate", default=1, ge=1, le=10
         ),
-        optimise_output_images: bool = Input(
-            description="Optimise output images by using webp",
-            default=True,
+        output_format: str = Input(
+            description="Format of the output images",
+            choices=["webp", "jpg", "png"],
+            default="webp",
         ),
-        optimise_output_images_quality: int = Input(
-            description="Quality of the output images, from 0 to 100",
+        output_quality: int = Input(
+            description="Quality of the output images, from 0 to 100. 100 is best quality, 0 is lowest quality.",
             default=80,
+            ge=0,
+            le=100,
         ),
         seed: int = Input(
-            description="Seed for the random number generator",
+            description="Set a seed for reproducibility. Random by default.",
             default=None,
         ),
     ) -> List[Path]:
@@ -120,24 +123,20 @@ class Predictor(BasePredictor):
             batch_size=number_of_images,
         )
 
-        wf = self.comfyUI.load_workflow(
-            workflow, handle_inputs=True, handle_weights=False
-        )
-
+        wf = self.comfyUI.load_workflow(workflow)
         self.comfyUI.connect()
         self.comfyUI.run_workflow(wf)
-
         files = self.log_and_collect_files(OUTPUT_DIR)
 
-        if optimise_output_images:
+        if output_quality < 100 or output_format in ["webp", "jpg"]:
             optimised_files = []
             for file in files:
                 if file.is_file() and file.suffix in [".jpg", ".jpeg", ".png"]:
                     image = Image.open(file)
-                    optimised_file_path = file.with_suffix(".webp")
+                    optimised_file_path = file.with_suffix(f".{output_format}")
                     image.save(
                         optimised_file_path,
-                        quality=optimise_output_images_quality,
+                        quality=output_quality,
                         optimize=True,
                     )
                     optimised_files.append(optimised_file_path)

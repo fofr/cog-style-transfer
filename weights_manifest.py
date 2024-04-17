@@ -38,5 +38,4 @@ class WeightsManifest:
                 weights_map.update(
                     self._generate_weights_map(self.weights_manifest[key], key.lower())
                 )
-        print(weights_map)
         return weights_map
