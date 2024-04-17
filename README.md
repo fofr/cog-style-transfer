@@ -50,7 +50,7 @@ Download ip-adapter-plus_sdxl_vit-h.safetensors to models/ipadapter
 wget https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors?download=true -O models/ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors
 ```
 
-Run the [following script](https://github.com/fofr/cog-face-to-many/blob/main/scripts/clone_plugins.sh) to install all the custom nodes:
+Run the [following script](https://github.com/fofr/cog-style-transfer/blob/main/scripts/clone_plugins.sh) to install all the custom nodes:
 
 ```sh
 ./scripts/clone_plugins.sh
