@@ -1,6 +1,7 @@
 import json
 import os
 
+BASE_URL = "https://weights.replicate.delivery/default/comfy-ui"
 BASE_PATH = "ComfyUI/models"
 
 
@@ -24,6 +25,7 @@ class WeightsManifest:
     def _generate_weights_map(self, keys, dest):
         return {
             key: {
+                "url": f"{BASE_URL}/{dest}/{key}.tar",
                 "dest": f"{BASE_PATH}/{dest}",
             }
             for key in keys
@@ -36,9 +38,5 @@ class WeightsManifest:
                 weights_map.update(
                     self._generate_weights_map(self.weights_manifest[key], key.lower())
                 )
-
-        print("Allowed weights:")
-        for weight in weights_map.keys():
-            print(weight)
-
+        print(weights_map)
         return weights_map

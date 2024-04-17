@@ -41,7 +41,7 @@ class ComfyUI:
         print("Server running")
 
     def run_server(self, output_directory, input_directory):
-        command = f"python ./ComfyUI/main.py --output-directory {output_directory} --input-directory {input_directory} --disable-metadata"
+        command = f"python ./ComfyUI/main.py --output-directory {output_directory} --input-directory {input_directory} --disable-metadata --preview-method none --gpu-only"
         server_process = subprocess.Popen(command, shell=True)
         server_process.wait()
 
@@ -188,30 +188,17 @@ class ComfyUI:
             else:
                 continue
 
-    def load_workflow(self, workflow):
+    def load_workflow(self, workflow, handle_inputs=False, handle_weights=False):
         if not isinstance(workflow, dict):
             wf = json.loads(workflow)
         else:
             wf = workflow
 
-        # There are two types of ComfyUI JSON
-        # We need the API version
-        if any(key in wf.keys() for key in ["last_node_id", "last_link_id", "version"]):
-            raise ValueError(
-                "You need to use the API JSON version of a ComfyUI workflow. To do this go to your ComfyUI settings and turn on 'Enable Dev mode Options'. Then you can save your ComfyUI workflow via the 'Save (API Format)' button."
-            )
-
-        self.handle_known_unsupported_nodes(wf)
-        self.handle_inputs(wf)
-        self.handle_weights(wf)
+        if handle_inputs:
+            self.handle_inputs(wf)
+        if handle_weights:
+            self.handle_weights(wf)
         return wf
-
-    # TODO: Find a better way of doing this
-    # Nuclear reset
-    def reset_execution_cache(self):
-        with open("examples/reset.json", "r") as file:
-            reset_workflow = json.loads(file.read())
-        self.queue_prompt(reset_workflow)
 
     def randomise_input_seed(self, input_key, inputs):
         if input_key in inputs and isinstance(inputs[input_key], (int, float)):
