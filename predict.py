@@ -51,7 +51,32 @@ class Predictor(BasePredictor):
                 files.extend(self.log_and_collect_files(path, prefix=f"{prefix}{f}/"))
         return files
 
+    def set_weights(self, workflow, model: str):
+        loader = workflow["2"]["inputs"]
+        sampler = workflow["3"]["inputs"]
+
+        if model == "fast":
+            sampler["steps"] = 4
+            sampler["cfg"] = 2
+            sampler["sampler_name"] = "dpmpp_sde_gpu"
+        else:
+            sampler["steps"] = 20
+            sampler["cfg"] = 8
+            sampler["sampler_name"] = "dpmpp_2m_sde_gpu"
+
+        if model == "fast":
+            loader["ckpt_name"] = "dreamshaperXL_lightningDPMSDE.safetensors"
+        elif model == "high-quality":
+            loader["ckpt_name"] = "albedobaseXL_v21.safetensors"
+        elif model == "realistic":
+            loader["ckpt_name"] = "RealVisXL_V4.0.safetensors"
+        elif model == "cinematic":
+            loader["ckpt_name"] = "CinematicRedmond.safetensors"
+        elif model == "animated":
+            loader["ckpt_name"] = "starlightXLAnimated_v3.safetensors"
+
     def update_workflow(self, workflow, **kwargs):
+        self.set_weights(workflow, kwargs["model"])
         workflow["6"]["inputs"]["text"] = kwargs["prompt"]
         workflow["7"]["inputs"]["text"] = f"nsfw, nude, {kwargs['negative_prompt']}"
         workflow["3"]["inputs"]["seed"] = kwargs["seed"]
@@ -80,6 +105,11 @@ class Predictor(BasePredictor):
         height: int = Input(
             description="Height of the output image",
             default=1024,
+        ),
+        model: str = Input(
+            description="Model to use for the generation",
+            choices=["fast", "high-quality", "realistic", "cinematic", "animated"],
+            default="fast",
         ),
         number_of_images: int = Input(
             description="Number of images to generate", default=1, ge=1, le=10
@@ -121,9 +151,10 @@ class Predictor(BasePredictor):
             width=width,
             height=height,
             batch_size=number_of_images,
+            model=model,
         )
 
-        wf = self.comfyUI.load_workflow(workflow)
+        wf = self.comfyUI.load_workflow(workflow, handle_weights=True)
         self.comfyUI.connect()
         self.comfyUI.run_workflow(wf)
         files = self.log_and_collect_files(OUTPUT_DIR)
