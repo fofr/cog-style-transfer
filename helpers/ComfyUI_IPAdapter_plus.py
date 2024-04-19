@@ -14,7 +14,7 @@ PRESETS = [
     "FACEID PLUS - SD1.5 only",
     "FACEID PLUS V2",
     "FACEID PORTRAIT (style transfer)",
-
+    "FACEID PORTRAIT UNNORM - SDXL only (strong)",
     # IPAdapterUnifiedLoaderCommunity
     "Composition",
 ]
@@ -85,7 +85,15 @@ class ComfyUI_IPAdapter_plus:
                 ]
             )
 
-        if preset.startswith("FACEID PORTRAIT"):
+        if preset.startswith("FACEID PORTRAIT UNNORM"):
+            is_insightface = True
+            weights_to_add.extend(
+                [
+                    "ip-adapter-faceid-portrait-unnorm_sdxl.bin",
+                ]
+            )
+
+        if preset.startswith("FACEID PORTRAIT ("):
             is_insightface = True
             weights_to_add.extend(
                 [

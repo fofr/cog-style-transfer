@@ -15,6 +15,7 @@ from urllib.error import URLError
 import requests
 
 from helpers.ComfyUI_IPAdapter_plus import ComfyUI_IPAdapter_plus
+from helpers.ComfyUI_Controlnet_Aux import ComfyUI_Controlnet_Aux
 
 
 class ComfyUI:
@@ -26,6 +27,8 @@ class ComfyUI:
     def start_server(self, output_directory, input_directory):
         self.input_directory = input_directory
         self.output_directory = output_directory
+
+        self.download_pre_start_models()
 
         server_thread = threading.Thread(
             target=self.run_server, args=(output_directory, input_directory)
@@ -54,23 +57,17 @@ class ComfyUI:
         except URLError:
             return False
 
+    def download_pre_start_models(self):
+        # Some models need to be downloaded and loaded before starting ComfyUI
+        self.weights_downloader.download_torch_checkpoints()
+
     def handle_weights(self, workflow):
         print("Checking weights")
         weights_to_download = []
-        weights_filetypes = [
-            ".ckpt",
-            ".safetensors",
-            ".pt",
-            ".pth",
-            ".bin",
-            ".onnx",
-            ".torchscript",
-        ]
+        weights_filetypes = self.weights_downloader.supported_filetypes
 
         for node in workflow.values():
-            for handler in [
-                ComfyUI_IPAdapter_plus,
-            ]:
+            for handler in [ComfyUI_IPAdapter_plus, ComfyUI_Controlnet_Aux]:
                 handler.add_weights(weights_to_download, node)
 
             if "inputs" in node:
