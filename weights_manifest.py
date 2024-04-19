@@ -4,6 +4,7 @@ import os
 BASE_URL = "https://weights.replicate.delivery/default/comfy-ui"
 BASE_PATH = "ComfyUI/models"
 
+from helpers.ComfyUI_Controlnet_Aux import ComfyUI_Controlnet_Aux
 
 class WeightsManifest:
     def __init__(self):
@@ -38,4 +39,6 @@ class WeightsManifest:
                 weights_map.update(
                     self._generate_weights_map(self.weights_manifest[key], key.lower())
                 )
+
+        weights_map.update(ComfyUI_Controlnet_Aux.weights_map(BASE_URL))
         return weights_map

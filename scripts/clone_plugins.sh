@@ -9,6 +9,7 @@
 repos=(
   "https://github.com/cubiq/ComfyUI_IPAdapter_plus 0d0a7b3"
   "https://github.com/Fannovel16/comfyui_controlnet_aux 6d6f63c"
+  "https://github.com/cubiq/ComfyUI_essentials c9236fe"
 )
 
 # Destination directory

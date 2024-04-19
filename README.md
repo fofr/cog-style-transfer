@@ -8,9 +8,11 @@ Or run it in ComfyUI:
 
 https://github.com/fofr/cog-style-transfer/blob/main/style-transfer-ui.json
 
-You’ll need the IPAdapter Plus custom nodes:
+You’ll need the following custom nodes:
 
 - [ComfyUI IPAdapter Plus](https://github.com/cubiq/ComfyUI_IPAdapter_plus/tree/1ac1cae)
+- [ComfyUI Essentials](https://github.com/cubiq/ComfyUI_essentials/tree/c9236fe)
+- [ComfyUI ControlNet Aux](https://github.com/Fannovel16/comfyui_controlnet_aux/tree/6d6f63c)
 
 ## Developing locally
 
@@ -48,6 +50,12 @@ Download ip-adapter-plus_sdxl_vit-h.safetensors to models/ipadapter
 
 ```sh
 wget https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors?download=true -O models/ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors
+```
+
+Download depth-zoe-xl-v1.0-controlnet.safetensors to models/controlnet
+
+```sh
+wget https://huggingface.co/SargeZT/controlnet-sd-xl-1.0-depth-16bit-zoe/resolve/main/depth-zoe-xl-v1.0-controlnet.safetensors?download=true -O models/controlnet/depth-zoe-xl-v1.0-controlnet.safetensors
 ```
 
 Run the [following script](https://github.com/fofr/cog-style-transfer/blob/main/scripts/clone_plugins.sh) to install all the custom nodes:

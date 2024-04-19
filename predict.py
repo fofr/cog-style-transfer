@@ -15,7 +15,10 @@ COMFYUI_TEMP_OUTPUT_DIR = "ComfyUI/temp"
 mimetypes.add_type("image/webp", ".webp")
 
 with open("style-transfer-api.json", "r") as file:
-    WORKFLOW_JSON = file.read()
+    STYLE_TRANSFER_WORKFLOW_JSON = file.read()
+
+with open("style-transfer-with-structure-api.json", "r") as file:
+    STYLE_TRANSFER_WITH_STRUCTURE_WORKFLOW_JSON = file.read()
 
 
 class Predictor(BasePredictor):
@@ -23,7 +26,7 @@ class Predictor(BasePredictor):
         self.comfyUI = ComfyUI("127.0.0.1:8188")
         self.comfyUI.start_server(OUTPUT_DIR, INPUT_DIR)
         self.comfyUI.load_workflow(
-            WORKFLOW_JSON, handle_inputs=False, handle_weights=True
+            STYLE_TRANSFER_WORKFLOW_JSON, handle_inputs=False, handle_weights=True
         )
 
     def cleanup(self):
@@ -33,9 +36,9 @@ class Predictor(BasePredictor):
                 shutil.rmtree(directory)
             os.makedirs(directory)
 
-    def handle_input_file(self, input_file: Path):
+    def handle_input_file(self, input_file: Path, filename: str = "image.png"):
         image = Image.open(input_file)
-        image.save(os.path.join(INPUT_DIR, "image.png"))
+        image.save(os.path.join(INPUT_DIR, filename))
 
     def log_and_collect_files(self, directory, prefix=""):
         files = []
@@ -79,16 +82,30 @@ class Predictor(BasePredictor):
         self.set_weights(workflow, kwargs["model"])
         workflow["6"]["inputs"]["text"] = kwargs["prompt"]
         workflow["7"]["inputs"]["text"] = f"nsfw, nude, {kwargs['negative_prompt']}"
-        workflow["3"]["inputs"]["seed"] = kwargs["seed"]
-        empty_latent_image = workflow["10"]["inputs"]
-        empty_latent_image["width"] = kwargs["width"]
-        empty_latent_image["height"] = kwargs["height"]
-        empty_latent_image["batch_size"] = kwargs["batch_size"]
+
+        sampler = workflow["3"]["inputs"]
+        sampler["seed"] = kwargs["seed"]
+
+        if kwargs["is_structure"]:
+            sampler["denoise"] = kwargs["structure_denoising_strength"]
+            workflow["18"]["inputs"]["strength"] = kwargs[
+                "structure_denoising_strength"
+            ]
+            workflow["24"]["inputs"]["amount"] = kwargs["batch_size"]
+        else:
+            empty_latent_image = workflow["10"]["inputs"]
+            empty_latent_image["width"] = kwargs["width"]
+            empty_latent_image["height"] = kwargs["height"]
+            empty_latent_image["batch_size"] = kwargs["batch_size"]
 
     def predict(
         self,
         style_image: Path = Input(
             description="Copy the style from this image",
+        ),
+        structure_image: Path = Input(
+            description="An optional image to copy structure from. Output images will use the same aspect ratio.",
+            default=None,
         ),
         prompt: str = Input(
             description="Prompt for the image",
@@ -99,11 +116,11 @@ class Predictor(BasePredictor):
             default="",
         ),
         width: int = Input(
-            description="Width of the output image",
+            description="Width of the output image (ignored if structure image given)",
             default=1024,
         ),
         height: int = Input(
-            description="Height of the output image",
+            description="Height of the output image (ignored if structure image given)",
             default=1024,
         ),
         model: str = Input(
@@ -113,6 +130,18 @@ class Predictor(BasePredictor):
         ),
         number_of_images: int = Input(
             description="Number of images to generate", default=1, ge=1, le=10
+        ),
+        structure_depth_strength: float = Input(
+            description="Strength of the depth controlnet",
+            default=1.0,
+            ge=0,
+            le=2.0,
+        ),
+        structure_denoising_strength: float = Input(
+            description="How much of the original image (and colors) to preserve (0 is all, 1 is none, 0.65 is a good balance)",
+            default=0.65,
+            ge=0,
+            le=1,
         ),
         output_format: str = Input(
             description="Format of the output images",
@@ -142,7 +171,12 @@ class Predictor(BasePredictor):
 
         self.handle_input_file(style_image)
 
-        workflow = json.loads(WORKFLOW_JSON)
+        if structure_image:
+            self.handle_input_file(structure_image, "structure.png")
+            workflow = json.loads(STYLE_TRANSFER_WITH_STRUCTURE_WORKFLOW_JSON)
+        else:
+            workflow = json.loads(STYLE_TRANSFER_WORKFLOW_JSON)
+
         self.update_workflow(
             workflow,
             prompt=prompt,
@@ -152,6 +186,9 @@ class Predictor(BasePredictor):
             height=height,
             batch_size=number_of_images,
             model=model,
+            is_structure=bool(structure_image),
+            structure_depth_strength=structure_depth_strength,
+            structure_denoising_strength=structure_denoising_strength,
         )
 
         wf = self.comfyUI.load_workflow(workflow, handle_weights=True)
